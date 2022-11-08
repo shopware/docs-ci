@@ -62,4 +62,4 @@ jobs:
         ./bin/console framework:schema -s openapi3 --store-api storeapi.json
         sed 's!\\/!/!g' -i storeapi.json
         echo 'set-output name=schema::'$(cat storeapi.json | base64)
-        echo "schema=$(cat storeapi.json)" >> $GITHUB_OUTPUT
+        echo "schema=$(cat storeapi.json | base64 )" >> $GITHUB_OUTPUT
