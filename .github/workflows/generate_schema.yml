@@ -60,5 +60,5 @@ jobs:
         ./bin/console plugin:install -a SwagCommercial 
         ./bin/console framework:schema -s openapi3 --store-api storeapi.json
         sed 's!\\/!/!g' -i storeapi.json
-        echo ':set-output name=schema::'$(cat storeapi.json | base64) >> $GITHUB_OUTPUT
-        echo '::set-output name=schema::'$(cat storeapi.json | base64) >> $GITHUB_OUTPUT
+        echo 'set-output name=schema::'$(cat storeapi.json | base64)
+        echo '::set-output name=schema::'$(cat storeapi.json | base64)
