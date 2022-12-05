@@ -46,7 +46,7 @@ jobs:
     - name: checkout latest release
       run: |
         export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
-        export SCHEMA_NAME="store-api-schema-$SWTAG"
+        echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
         git checkout $SWTAG
         
     - name: checkout commercial plugin
@@ -73,4 +73,4 @@ jobs:
         retention-days: 60
         
     - name: set output
-      run: echo "schema=store-api-schema-$SWTAG" >> $GITHUB_OUTPUT
+      run: echo "schema=$SCHEMA_NAME" >> $GITHUB_OUTPUT
