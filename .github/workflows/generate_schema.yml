@@ -45,6 +45,7 @@ jobs:
     - name: checkout latest release
       run: |
         export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+        export SCHEMA_NAME="store-api-schema-$SWTAG"
         git checkout $SWTAG
         
     - name: checkout commercial plugin
@@ -66,7 +67,7 @@ jobs:
     - name: upload api schema
       uses: actions/upload-artifact@v3
       with:
-        name: "store-api-schema-$SWTAG"
+        name: ${{ env.SCHEMA_NAME }}
         path: storeapi.json
         retention-days: 60
         
