@@ -27,6 +27,7 @@ jobs:
       APP_URL: http://localhost:8000
       APP_SECRET: devsecret
       BLUE_GREEN_DEPLOYMENT: 0
+      SCHEMA_NAME: ""
 
     services:
       database:
