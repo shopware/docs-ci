@@ -30,7 +30,7 @@ jobs:
 
     services:
       database:
-        image: mysql:5.7
+        image: mysql:8
         env:
             MYSQL_ROOT_PASSWORD: root
             MYSQL_DATABASE: root
@@ -44,7 +44,8 @@ jobs:
           fetch-depth: 0
     - name: checkout latest release
       run: |
-        git checkout $(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+        export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+        git checkout $SWTAG
         
     - name: checkout commercial plugin
       env:
@@ -61,5 +62,14 @@ jobs:
         ./bin/console plugin:install -a SwagCommercial 
         ./bin/console framework:schema -s openapi3 --store-api storeapi.json
         sed 's!\\/!/!g' -i storeapi.json
-        echo 'set-output name=schema::'$(cat storeapi.json | base64)
-        echo "schema='$(cat storeapi.json | base64 )'" >> $GITHUB_OUTPUT
+        storeapi.json
+        
+    - name: upload api schema
+      uses: actions/upload-artifact@v3
+      with:
+        name: "store-api-schema-$SWTAG"
+        path: storeapi.json
+        retention-days: 60
+        
+    - name: set output
+      run: echo "schema=store-api-schema-$SWTAG" >> $GITHUB_OUTPUT
