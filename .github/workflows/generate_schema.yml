@@ -76,7 +76,7 @@ jobs:
         composer install -o
         composer run init:db
         ./bin/console plugin:install -a SwagCommercial 
-        ./bin/console framework:schema $SCHEMA_FLAGS
+        ./bin/console framework:schema "$SCHEMA_FLAGS"
         sed 's!\\/!/!g' -i storeapi.json
         
     - name: upload api schema
