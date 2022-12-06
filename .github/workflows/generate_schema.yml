@@ -70,7 +70,7 @@ jobs:
       with:
         name: ${{ env.SCHEMA_NAME }}
         path: storeapi.json
-        retention-days: 60
+        retention-days: 1
         
     - name: set output
       run: echo "schema=$SCHEMA_NAME" >> $GITHUB_OUTPUT
