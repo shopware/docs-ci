@@ -51,11 +51,10 @@ jobs:
 
     - name: configure job
       run: |
-        echo "${{ inputs.api_type }}"
         if [ "${{ inputs.api_type }}" = "storeapi" ]; then
-          echo "SCHEMA_FLAGS='-s openapi3 --store-api storeapi.json'" >> $GITHUB_ENV
+          echo "SCHEMA_FLAGS=-s openapi3 --store-api storeapi.json" >> $GITHUB_ENV
         else
-          echo "SCHEMA_FLAGS='-s openapi3 adminapi.json'" >> $GITHUB_ENV
+          echo "SCHEMA_FLAGS=-s openapi3 adminapi.json" >> $GITHUB_ENV
         fi
 
         export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
