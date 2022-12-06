@@ -2,6 +2,10 @@ name: Generate API Schema
 
 on:
   workflow_call:
+    inputs:
+      api_type:
+        required: true
+        type: string
     outputs:
       api_schema:
         description: "The the open api 3 schema as json"
@@ -28,6 +32,7 @@ jobs:
       APP_SECRET: devsecret
       BLUE_GREEN_DEPLOYMENT: 0
       SCHEMA_NAME: ""
+      SCHEMA_FLAGS: ""
 
     services:
       database:
@@ -43,10 +48,20 @@ jobs:
           repository: shopware/platform
           ref: trunk
           fetch-depth: 0
-    - name: checkout latest release
+
+    - name: configure job
       run: |
+        if [ ${{ inputs.api_type }} = 'storeapi' ]; then
+          echo "SCHEMA_FLAGS='-s openapi3 --store-api storeapi.json'" >> $GITHUB_ENV
+        else
+          echo "SCHEMA_FLAGS='-s openapi3 adminapi.json'" >> $GITHUB_ENV
+        fi
+
         export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
         echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
+
+    - name: checkout latest release
+      run: |
         git checkout $SWTAG
         
     - name: checkout commercial plugin
@@ -61,7 +76,7 @@ jobs:
         composer install -o
         composer run init:db
         ./bin/console plugin:install -a SwagCommercial 
-        ./bin/console framework:schema -s openapi3 --store-api storeapi.json
+        ./bin/console framework:schema $SCHEMA_FLAGS
         sed 's!\\/!/!g' -i storeapi.json
         
     - name: upload api schema
