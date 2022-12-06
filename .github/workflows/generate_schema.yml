@@ -51,7 +51,7 @@ jobs:
 
     - name: configure job
       run: |
-        if [ ${{ inputs.api_type }} = 'storeapi' ]; then
+        if [ '${{ inputs.api_type }}' = 'storeapi' ]; then
           echo "SCHEMA_FLAGS='-s openapi3 --store-api storeapi.json'" >> $GITHUB_ENV
         else
           echo "SCHEMA_FLAGS='-s openapi3 adminapi.json'" >> $GITHUB_ENV
