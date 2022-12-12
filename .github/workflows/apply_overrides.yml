@@ -25,7 +25,8 @@ jobs:
       run: |
         for k in $(yq '. | keys | .[]' ${{ inputs.override_file }}); do
           newDescription=$(yq ".\"$k\"" ${{ inputs.override_file }});
-          yq  -I 4 -o json -iP "$k.description = \"${newDescription}\"" ${{ inputs.schema_file }}
+          # Indent 4; output as json; edit in place
+          yq  -I 4 -o json -i "$k.description = \"${newDescription}\"" ${{ inputs.schema_file }}
         done
 
     - name: upload api schema
