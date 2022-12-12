@@ -1,0 +1,32 @@
+name: Apply Overrides
+
+on:
+  workflow_call:
+    inputs:
+      override_file:
+        required: true
+        type: string
+      schema_file:
+        required: true
+        type: string
+
+jobs:
+  apply-overrides:
+    name: "Applies the overrides to the schema"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v18
+
+    - name: Run the script
+      run: ./set_descriptions.sh
+
+    - name: upload api schema
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.schema_file }}
+        path: ${{ inputs.schema_file }}
+        retention-days: 1
