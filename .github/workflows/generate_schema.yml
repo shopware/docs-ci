@@ -4,6 +4,7 @@ on:
   workflow_call:
     inputs:
       api_type:
+        description: "Defines the api the schema is generated for. Must be storeapi or adminapi"  
         required: true
         type: string
     outputs:
@@ -20,7 +21,7 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   generate_api_schema:
-    name: "Update storeapi.json"
+    name: "Generate an openapi3 schema for the given api type"
     runs-on: ubuntu-latest
     container: "shopware/development:8.1-composer-2"
     outputs:
@@ -53,8 +54,11 @@ jobs:
       run: |
         if [ "${{ inputs.api_type }}" = "storeapi" ]; then
           echo "SCHEMA_FLAGS=-s openapi3 --store-api storeapi.json" >> $GITHUB_ENV
-        else
+        elseif [ "${{ inputs.api_type }}" = "adminapi" ]; then
           echo "SCHEMA_FLAGS=-s openapi3 adminapi.json" >> $GITHUB_ENV
+        else
+          echo 'api_type must be either "storeapi" or "adminapi"'
+          exit 1
         fi
 
         export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
