@@ -32,6 +32,7 @@ jobs:
       BLUE_GREEN_DEPLOYMENT: 0
       SCHEMA_NAME: ""
       SCHEMA_FLAGS: ""
+      SCHEMA_FILE: ""
 
     services:
       database:
@@ -52,8 +53,10 @@ jobs:
       run: |
         if [ "${{ inputs.api_type }}" = "storeapi" ]; then
           echo "SCHEMA_FLAGS=-s openapi3 --store-api storeapi.json" >> $GITHUB_ENV
+          echo "SCHEMA_FILE=storeapi.json" >> $GITHUB_ENV
         elif [ "${{ inputs.api_type }}" = "adminapi" ]; then
           echo "SCHEMA_FLAGS=-s openapi3 adminapi.json" >> $GITHUB_ENV
+          echo "SCHEMA_FILE=adminapi.json" >> $GITHUB_ENV
         else
           echo 'api_type must be either "storeapi" or "adminapi"'
           exit 1
@@ -73,19 +76,19 @@ jobs:
       run: |
         git clone https://${DEPLOY_USER}:${DEPLOY_TOKEN}@gitlab.shopware.com/shopware/6/product/commercial.git custom/plugins/SwagCommercial
         
-    - name: Generate storeapi.json
+    - name: Generate schema file
       run: |
         composer install -o
         composer run init:db
         ./bin/console plugin:install -a SwagCommercial 
         ./bin/console framework:schema $SCHEMA_FLAGS
-        sed 's!\\/!/!g' -i storeapi.json
+        sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
         
     - name: upload api schema
       uses: actions/upload-artifact@v3
       with:
         name: ${{ env.SCHEMA_NAME }}
-        path: storeapi.json
+        path: ${{ env.SCHEMA_FILE }}
         retention-days: 1
         
     - name: set output
