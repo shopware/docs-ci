@@ -79,11 +79,11 @@ jobs:
     - name: configure job
       env:
         INPUT_SCHEMA_FLAGS: ${{ inputs.schema_flags }}
-        INPUT_SCHEMA_FILE: ${{ inputs.schema_file }} 
+        INPUT_SCHEMA_FILE: ${{ inputs.schema_file }}
       run: |
         echo "SCHEMA_FLAGS=-s openapi3 $INPUT_SCHEMA_FLAGS $INPUT_SCHEMA_FILE" >> $GITHUB_ENV
         echo "SCHEMA_FILE=$INPUT_SCHEMA_FILE" >> $GITHUB_ENV
-        
+
         export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
         echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
         git config --global --add safe.directory /__w/store-api-reference/store-api-reference
@@ -112,9 +112,10 @@ jobs:
           ./bin/console plugin:install -a SwagShopwarePwa
           ./bin/console system:config:set SwagGuidedShopping.config.baseUrl https://api.daily.co/v1/
           ./bin/console system:config:set SwagGuidedShopping.config.apiKey ${DAILY_CO_API_KEY}
+          ./bin/console plugin:install -a ${{ inputs.plugin_name }}
         elif [ ${{ inputs.plugin_name }} ]; then
           ./bin/console plugin:install -a ${{ inputs.plugin_name }}
-        fi        
+        fi
         ./bin/console framework:schema $SCHEMA_FLAGS
         sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
 
