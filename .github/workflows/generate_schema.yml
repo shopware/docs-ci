@@ -31,6 +31,7 @@ on:
         description: "Adding a version to build"
         required: false
         type: string
+        default: 'trunk'
     outputs:
       api_schema:
         description: "The the open api 3 schema as json"
