@@ -32,6 +32,11 @@ on:
         required: false
         type: string
         default: 'trunk'
+      php_version:
+        description: "Adding a php version to build"
+        required: false
+        type: string
+        default: '8.1'
     outputs:
       api_schema:
         description: "The the open api 3 schema as json"
@@ -48,7 +53,7 @@ jobs:
   generate_api_schema:
     name: "Generate an openapi3 schema for the given api type"
     runs-on: ubuntu-latest
-    container: "shopware/development:8.1-composer-2"
+    container: "shopware/development:${{ inputs.php_version }}-composer-2"
     outputs:
       schema: ${{ steps.generate.outputs.schema }}
     env:
@@ -65,72 +70,72 @@ jobs:
       database:
         image: mysql:8
         env:
-            MYSQL_ROOT_PASSWORD: root
-            MYSQL_DATABASE: root
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: root
 
     steps:
-    - name: Test
-      run: |
-        echo ${{ env.PLUGIN_NAME }}
-        echo $PLUGIN_NAME
+      - name: Test
+        run: |
+          echo ${{ env.PLUGIN_NAME }}
+          echo $PLUGIN_NAME
 
-    - name: Checkout Shopware
-      uses: actions/checkout@v3
-      with:
+      - name: Checkout Shopware
+        uses: actions/checkout@v3
+        with:
           repository: shopware/shopware
           ref: ${{ inputs.shopware_version }}
           fetch-depth: 0
 
-    - name: configure job
-      env:
-        INPUT_SCHEMA_FLAGS: ${{ inputs.schema_flags }}
-        INPUT_SCHEMA_FILE: ${{ inputs.schema_file }}
-      run: |
-        echo "SCHEMA_FLAGS=-s openapi3 $INPUT_SCHEMA_FLAGS $INPUT_SCHEMA_FILE" >> $GITHUB_ENV
-        echo "SCHEMA_FILE=$INPUT_SCHEMA_FILE" >> $GITHUB_ENV
+      - name: configure job
+        env:
+          INPUT_SCHEMA_FLAGS: ${{ inputs.schema_flags }}
+          INPUT_SCHEMA_FILE: ${{ inputs.schema_file }}
+        run: |
+          echo "SCHEMA_FLAGS=-s openapi3 $INPUT_SCHEMA_FLAGS $INPUT_SCHEMA_FILE" >> $GITHUB_ENV
+          echo "SCHEMA_FILE=$INPUT_SCHEMA_FILE" >> $GITHUB_ENV
+          
+          export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+          echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
+          git config --global --add safe.directory /__w/store-api-reference/store-api-reference
+          git config --global --add safe.directory /__w/admin-api-reference/admin-api-reference
 
-        export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
-        echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
-        git config --global --add safe.directory /__w/store-api-reference/store-api-reference
-        git config --global --add safe.directory /__w/admin-api-reference/admin-api-reference
+      - name: checkout latest release
+        run: |
+          git checkout $SWTAG
 
-    - name: checkout latest release
-      run: |
-        git checkout $SWTAG
-
-    - name: checkout ${{ inputs.plugin_name }} plugin
-      env:
-        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
-      if: ${{ inputs.plugin_name }}
-      run: |
+      - name: checkout ${{ inputs.plugin_name }} plugin
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        if: ${{ inputs.plugin_name }}
+        run: |
           git clone ${{ inputs.git_options }} https://${DEPLOY_USER}:${DEPLOY_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
-    - name: Generate schema file
-      env:
-        DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
-      run: |
-        composer install -o
-        composer run init:db
-        if [ "${{ inputs.plugin_name }}" = "SwagGuidedShopping" ]; then
-          composer require ${{ inputs.composer_packages }}
-          ./bin/console plugin:refresh
-          ./bin/console plugin:install -a SwagShopwarePwa
-          ./bin/console system:config:set SwagGuidedShopping.config.baseUrl https://api.daily.co/v1/
-          ./bin/console system:config:set SwagGuidedShopping.config.apiKey ${DAILY_CO_API_KEY}
-          ./bin/console plugin:install -a ${{ inputs.plugin_name }}
-        elif [ ${{ inputs.plugin_name }} ]; then
-          ./bin/console plugin:install -a ${{ inputs.plugin_name }}
-        fi
-        ./bin/console framework:schema $SCHEMA_FLAGS
-        sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
+      - name: Generate schema file
+        env:
+          DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
+        run: |
+          composer install -o
+          composer run init:db
+          if [ "${{ inputs.plugin_name }}" = "SwagGuidedShopping" ]; then
+            composer require ${{ inputs.composer_packages }}
+            ./bin/console plugin:refresh
+            ./bin/console plugin:install -a SwagShopwarePwa
+            ./bin/console system:config:set SwagGuidedShopping.config.baseUrl https://api.daily.co/v1/
+            ./bin/console system:config:set SwagGuidedShopping.config.apiKey ${DAILY_CO_API_KEY}
+            ./bin/console plugin:install -a ${{ inputs.plugin_name }}
+          elif [ ${{ inputs.plugin_name }} ]; then
+            ./bin/console plugin:install -a ${{ inputs.plugin_name }}
+          fi
+          ./bin/console framework:schema $SCHEMA_FLAGS
+          sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
 
-    - name: upload api schema
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ env.SCHEMA_NAME }}
-        path: ${{ env.SCHEMA_FILE }}
-        retention-days: 1
+      - name: upload api schema
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.SCHEMA_NAME }}
+          path: ${{ env.SCHEMA_FILE }}
+          retention-days: 1
 
-    - name: set output
-      id: generate
-      run: echo "schema=$SCHEMA_NAME" >> $GITHUB_OUTPUT
+      - name: set output
+        id: generate
+        run: echo "schema=$SCHEMA_NAME" >> $GITHUB_OUTPUT
