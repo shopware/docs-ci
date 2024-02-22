@@ -94,10 +94,11 @@ jobs:
           echo "SCHEMA_FLAGS=-s openapi3 $INPUT_SCHEMA_FLAGS $INPUT_SCHEMA_FILE" >> $GITHUB_ENV
           echo "SCHEMA_FILE=$INPUT_SCHEMA_FILE" >> $GITHUB_ENV
           
-          export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
-          echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
           git config --global --add safe.directory /__w/store-api-reference/store-api-reference
           git config --global --add safe.directory /__w/admin-api-reference/admin-api-reference
+          
+          export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+          echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
 
       - name: checkout latest release
         run: |
