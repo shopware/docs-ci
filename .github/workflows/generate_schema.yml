@@ -133,10 +133,10 @@ jobs:
       - name: upload api schema
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.SCHEMA_NAME }}
+          name: ${{ env.SCHEMA_NAME }}-${{ env.SCHEMA_FILE }}
           path: ${{ env.SCHEMA_FILE }}
           retention-days: 1
 
       - name: set output
         id: generate
-        run: echo "schema=$SCHEMA_NAME" >> $GITHUB_OUTPUT
+        run: echo "schema=$SCHEMA_NAME-$SCHEMA_FILE" >> $GITHUB_OUTPUT
