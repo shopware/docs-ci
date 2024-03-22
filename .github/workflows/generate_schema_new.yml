@@ -1,0 +1,142 @@
+name: Generate API Schema with new image
+
+on:
+  workflow_call:
+    inputs:
+      schema_flags:
+        description: "Parameters for the schema generation script"
+        required: true
+        type: string
+      schema_file:
+        description: "File name for the schema generation script"
+        required: true
+        type: string
+      plugin_name:
+        description: "Defines a plugin name that is passed to the framework:schema command."
+        required: false
+        type: string
+      plugin_url:
+        description: "Defines a plugin name that is passed to the framework:schema command. Example: gitlab.shopware.com:shopware/6/services/swagguidedshopping.git"
+        required: false
+        type: string
+      composer_packages:
+        description: "Defines composer packages that are passed to composer require. Example: shopware-pwa/shopware-pwa"
+        required: false
+        type: string
+      git_options:
+        description: "Adding git options to clone"
+        required: false
+        type: string
+      shopware_version:
+        description: "Adding a version to build"
+        required: false
+        type: string
+        default: 'trunk'
+      php_version:
+        description: "Adding a php version to build"
+        required: false
+        type: string
+        default: '8.1'
+    outputs:
+      api_schema:
+        description: "The the open api 3 schema as json"
+        value: ${{ jobs.generate_api_schema.outputs.schema }}
+    secrets:
+      DEPLOY_USER:
+        required: true
+      DEPLOY_TOKEN:
+        required: true
+      DAILY_CO_API_KEY:
+        required: false
+
+jobs:
+  generate_api_schema:
+    name: "Generate an openapi3 schema for the given api type"
+    runs-on: ubuntu-latest
+    container: "ghcr.io/shopware/docker-base:8.3.3-caddy"
+    outputs:
+      schema: ${{ steps.generate.outputs.schema }}
+    env:
+      APP_ENV: prod
+      DATABASE_URL: mysql://root:root@database:3306/root
+      APP_URL: http://localhost:8000
+      APP_SECRET: devsecret
+      BLUE_GREEN_DEPLOYMENT: 0
+      SCHEMA_NAME: ""
+      SCHEMA_FLAGS: ""
+      SCHEMA_FILE: ""
+
+    services:
+      database:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: root
+
+    steps:
+      - name: Test
+        run: |
+          echo ${{ env.PLUGIN_NAME }}
+          echo $PLUGIN_NAME
+
+      - name: Checkout Shopware
+        uses: actions/checkout@v4
+        with:
+          repository: shopware/shopware
+          ref: ${{ inputs.shopware_version }}
+          fetch-depth: 0
+
+      - name: configure job
+        env:
+          INPUT_SCHEMA_FLAGS: ${{ inputs.schema_flags }}
+          INPUT_SCHEMA_FILE: ${{ inputs.schema_file }}
+        run: |
+          echo "SCHEMA_FLAGS=-s openapi3 $INPUT_SCHEMA_FLAGS $INPUT_SCHEMA_FILE" >> $GITHUB_ENV
+          echo "SCHEMA_FILE=$INPUT_SCHEMA_FILE" >> $GITHUB_ENV
+          
+          git config --global --add safe.directory /__w/store-api-reference/store-api-reference
+          git config --global --add safe.directory /__w/admin-api-reference/admin-api-reference
+          
+          export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+          echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
+
+      - name: checkout latest release
+        run: |
+          git checkout $SWTAG
+
+      - name: checkout ${{ inputs.plugin_name }} plugin
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        if: ${{ inputs.plugin_name }}
+        run: |
+          git clone ${{ inputs.git_options }} https://${DEPLOY_USER}:${DEPLOY_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
+      - name: Generate schema file
+        env:
+          DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
+        run: |
+          composer install -o
+          composer run init:db
+          if [ "${{ inputs.plugin_name }}" = "SwagGuidedShopping" ]; then
+            composer require ${{ inputs.composer_packages }}
+            ./bin/console plugin:refresh
+            ./bin/console plugin:install -a SwagShopwarePwa
+            ./bin/console system:config:set SwagGuidedShopping.config.baseUrl https://api.daily.co/v1/
+            ./bin/console system:config:set SwagGuidedShopping.config.apiKey ${DAILY_CO_API_KEY}
+            ./bin/console plugin:install -a ${{ inputs.plugin_name }}
+          elif [ ${{ inputs.plugin_name }} ]; then
+            ./bin/console plugin:install -a ${{ inputs.plugin_name }}
+          fi
+          ./bin/console framework:schema $SCHEMA_FLAGS
+          sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
+
+      - name: upload api schema
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SCHEMA_NAME }}-${{ env.SCHEMA_FILE }}
+          path: ${{ env.SCHEMA_FILE }}
+          retention-days: 1
+
+      - name: set output
+        id: generate
+        run: echo "schema=$SCHEMA_NAME-$SCHEMA_FILE" >> $GITHUB_OUTPUT
