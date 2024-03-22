@@ -1,7 +1,7 @@
 name: Generate API Schema with new image
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       schema_flags:
         description: "Parameters for the schema generation script"
