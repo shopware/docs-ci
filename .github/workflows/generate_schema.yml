@@ -36,7 +36,7 @@ on:
         description: "Adding a php version to build"
         required: false
         type: string
-        default: '8.1'
+        default: '8.2'
     outputs:
       api_schema:
         description: "The the open api 3 schema as json"
