@@ -97,7 +97,7 @@ jobs:
           git config --global --add safe.directory /__w/store-api-reference/store-api-reference
           git config --global --add safe.directory /__w/admin-api-reference/admin-api-reference
           
-          export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k3,4 | head -n1 | tr ' ' '.')
+          export SWTAG=$(git tag | tr '.' ' ' | sort -nr -k2,3 | head -n1 | tr ' ' '.')
           echo "SCHEMA_NAME=store-api-schema-$SWTAG" >> $GITHUB_ENV
 
       - name: checkout latest release
