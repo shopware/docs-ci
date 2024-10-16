@@ -125,7 +125,8 @@ jobs:
             ./bin/console system:config:set SwagGuidedShopping.config.apiKey ${DAILY_CO_API_KEY}
             ./bin/console plugin:install -a ${{ inputs.plugin_name }}
           elif [ ${{ inputs.plugin_name }} ]; then
-            ./bin/console plugin:install -a ${{ inputs.plugin_name }}
+            ./bin/console plugin:install ${{ inputs.plugin_name }}
+            ./bin/console plugin:activate ${{ inputs.plugin_name }}
           fi
           ./bin/console framework:schema $SCHEMA_FLAGS
           sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
