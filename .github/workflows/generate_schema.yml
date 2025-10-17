@@ -42,9 +42,7 @@ on:
         description: "The the open api 3 schema as json"
         value: ${{ jobs.generate_api_schema.outputs.schema }}
     secrets:
-      DEPLOY_USER:
-        required: true
-      DEPLOY_TOKEN:
+      GITHUB_TOKEN:
         required: true
       DAILY_CO_API_KEY:
         required: false
@@ -106,11 +104,10 @@ jobs:
 
       - name: checkout ${{ inputs.plugin_name }} plugin
         env:
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ inputs.plugin_name }}
         run: |
-          git clone ${{ inputs.git_options }} https://${DEPLOY_USER}:${DEPLOY_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
+          git clone ${{ inputs.git_options }} https://x-access-token:${GITHUB_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
       - name: Generate schema file
         env:
           DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
