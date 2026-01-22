@@ -41,11 +41,7 @@ on:
       api_schema:
         description: "The the open api 3 schema as json"
         value: ${{ jobs.generate_api_schema.outputs.schema }}
-    secrets:
-      GITHUB_TOKEN:
-        required: true
-      DAILY_CO_API_KEY:
-        required: false
+
 
 jobs:
   generate_api_schema:
