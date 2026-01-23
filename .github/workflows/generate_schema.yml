@@ -103,7 +103,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ inputs.plugin_name }}
         run: |
-          git clone ${{ inputs.git_options }} https://x-access-token:${GITHUB_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
+          git clone ${{ inputs.git_options }} https://x-access-token:${OCTO_STS_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
       - name: Generate schema file
         env:
           DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
