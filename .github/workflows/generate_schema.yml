@@ -47,6 +47,9 @@ jobs:
   generate_api_schema:
     name: "Generate an openapi3 schema for the given api type"
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     container: "shopware/development:${{ inputs.php_version }}-composer-2"
     outputs:
       schema: ${{ steps.generate.outputs.schema }}
@@ -98,12 +101,20 @@ jobs:
         run: |
           git checkout $SWTAG
 
+      - name: Issue GitHub token with octo-sts
+        id: octo-sts
+        if: ${{ inputs.plugin_name != '' }}
+        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+        with:
+          scope: shopware
+          identity: OpenApiDocs
+
       - name: checkout ${{ inputs.plugin_name }} plugin
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLUGIN_CLONE_TOKEN: ${{ steps.octo-sts.outputs.token }}
         if: ${{ inputs.plugin_name }}
         run: |
-          git clone ${{ inputs.git_options }} https://x-access-token:${OCTO_STS_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
+          git clone ${{ inputs.git_options }} https://x-access-token:${PLUGIN_CLONE_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
       - name: Generate schema file
         env:
           DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
