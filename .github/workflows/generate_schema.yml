@@ -19,6 +19,11 @@ on:
         description: "Defines a plugin name that is passed to the framework:schema command. Example: gitlab.shopware.com:shopware/6/services/swagguidedshopping.git"
         required: false
         type: string
+      plugin_branch:
+        description: "Defines a specific branch to checkout for the plugin"
+        required: false
+        type: string
+        default: 'trunk'
       composer_packages:
         description: "Defines composer packages that are passed to composer require. Example: shopware-pwa/shopware-pwa"
         required: false
@@ -114,7 +119,7 @@ jobs:
           PLUGIN_CLONE_TOKEN: ${{ steps.octo-sts.outputs.token }}
         if: ${{ inputs.plugin_name }}
         run: |
-          git clone ${{ inputs.git_options }} https://x-access-token:${PLUGIN_CLONE_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
+          git clone -b ${{ inputs.plugin_branch }} ${{ inputs.git_options }} https://x-access-token:${PLUGIN_CLONE_TOKEN}@${{ inputs.plugin_url }} custom/plugins/${{ inputs.plugin_name }}
       - name: Generate schema file
         env:
           DAILY_CO_API_KEY: ${{ secrets.DAILY_CO_API_KEY }}
