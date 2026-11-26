@@ -82,7 +82,7 @@ jobs:
           echo $PLUGIN_NAME
 
       - name: Checkout Shopware
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: shopware/shopware
           ref: ${{ inputs.shopware_version }}
@@ -109,7 +109,7 @@ jobs:
       - name: Issue GitHub token with octo-sts
         id: octo-sts
         if: ${{ inputs.plugin_name != '' }}
-        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+        uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
         with:
           scope: shopware
           identity: OpenApiDocs
@@ -141,7 +141,7 @@ jobs:
           sed 's!\\/!/!g' -i ${{ env.SCHEMA_FILE }}
 
       - name: upload api schema
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.SCHEMA_NAME }}-${{ env.SCHEMA_FILE }}
           path: ${{ env.SCHEMA_FILE }}
